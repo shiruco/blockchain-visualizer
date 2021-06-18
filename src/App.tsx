@@ -25,9 +25,9 @@ export default function App() {
     useEffect(() => {
       const angle = (delta as number) / 2000 * -1
       //   console.log(angle)
-      camera.rotation.x = angle
-      camera.rotation.y = angle
-      camera.rotation.z = angle
+      // camera.rotation.x = angle
+      // camera.rotation.y = angle
+      // camera.rotation.z = angle
     }, [delta])
 
     useFrame(({clock}) => {
@@ -42,6 +42,7 @@ export default function App() {
   return (
     <Container>
       <Canvas camera={{position: [0,0,5], fov: 60}}>
+        <color attach="background" args={["gray"]} />
         {/* <fog attach="fog" args={['#cc7b32', 0, 500]} /> */}
         <Test />
         <ambientLight />

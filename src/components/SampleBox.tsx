@@ -1,10 +1,11 @@
-import React, { useRef, useCallback, useEffect, useState } from 'react'
+import React, { useRef, useCallback, useEffect, useState, useMemo } from 'react'
 import { ReactThreeFiber, useThree } from 'react-three-fiber'
 import * as THREE from 'three'
-import { Mesh } from 'three'
+import { Mesh, BoxHelper } from 'three'
 import { a } from '@react-spring/three'
 import { SpringValue, useSpring, config } from '@react-spring/core'
 import { useFrame } from 'react-three-fiber'
+import { useHelper } from '@react-three/drei'
 
 type BoxProps = ReactThreeFiber.Object3DNode<Mesh, typeof Mesh> & {
   tick?: number
@@ -22,12 +23,8 @@ export default function SampleBox(props: BoxProps) {
   //console.log(props.tick)
   const [hoverd, setHoverd] = useState(false)
 
-  const ref = useRef({} as Mesh)
-  // useFrame(() => {
-  //   setTimeout(() => {
-  //     ref.current.rotation.x += 0.1
-  //   }, 1000)
-  // })
+  const refMesh = useRef({} as Mesh)
+  //useHelper(refMesh, BoxHelper, 'cyan')
 
   const [{ rotation }, setRotation] = useSpring(() => ({
     rotation: 0
@@ -52,7 +49,7 @@ export default function SampleBox(props: BoxProps) {
       scale: 2,
       config: config.wobbly
     })
-  }, [setScale])
+  }, [])
 
   const handleOnPointerOut = useCallback(() => {
     setHoverd(false)
@@ -60,12 +57,37 @@ export default function SampleBox(props: BoxProps) {
       scale: 1.5,
       config: config.wobbly
     })
-  }, [setScale])
+  }, [])
+
+  const geom = useMemo(() => {
+    return new THREE.BoxBufferGeometry()
+  }, [])
+
+  const LineSecmentContents = React.memo(props => {
+    return (
+      <a.mesh {...props} ref={refMesh} scale={scale} rotation-x={rotation} onPointerEnter={handleOnPointerOver} onPointerLeave={handleOnPointerOut}>
+        <lineSegments>
+          <edgesGeometry attach='geometry' args={[geom]}/>
+          <lineBasicMaterial attach='material' transparent />
+        </lineSegments>
+      </a.mesh>
+    )
+  })
+  const Contents = React.memo(props => {
+    return (
+      <a.mesh {...props} ref={refMesh} scale={scale} rotation-x={rotation} onPointerEnter={handleOnPointerOver} onPointerLeave={handleOnPointerOut}>
+        <boxBufferGeometry attach='geometry' />
+        <meshPhongMaterial attach='material' transparent />
+      </a.mesh>
+    )
+  })
 
   return (
-    <a.mesh {...props} ref={ref} scale={scale} rotation-x={rotation} onPointerOver={handleOnPointerOver} onPointerOut={handleOnPointerOut}>
-      <boxBufferGeometry attach='geometry' />
-      <meshPhongMaterial attach='material' color='hotpink' transparent />
-    </a.mesh>
+    <>
+      {hoverd
+        ? <LineSecmentContents {...props} />
+        : <Contents {...props} />
+      }
+    </>
   )
 }
