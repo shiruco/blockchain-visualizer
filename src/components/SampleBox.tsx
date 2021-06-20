@@ -1,11 +1,12 @@
 import React, { useRef, useCallback, useEffect, useState, useMemo } from 'react'
 import { ReactThreeFiber, useThree } from 'react-three-fiber'
 import * as THREE from 'three'
-import { Mesh, BoxHelper } from 'three'
-import { a } from '@react-spring/three'
+import { Mesh, Object3D } from 'three'
+import { a, Transition } from '@react-spring/three'
 import { SpringValue, useSpring, config } from '@react-spring/core'
 import { useFrame } from 'react-three-fiber'
 import { useHelper } from '@react-three/drei'
+import throttle from 'lodash/throttle';
 
 type BoxProps = ReactThreeFiber.Object3DNode<Mesh, typeof Mesh> & {
   tick?: number
@@ -44,6 +45,7 @@ export default function SampleBox(props: BoxProps) {
   }))
 
   const handleOnPointerOver = useCallback(() => {
+    console.log("handleOnPointerOver")
     setHoverd(true)
     setScale({
       scale: 2,
@@ -52,6 +54,7 @@ export default function SampleBox(props: BoxProps) {
   }, [])
 
   const handleOnPointerOut = useCallback(() => {
+    console.log("handleOnPointerOut")
     setHoverd(false)
     setScale({
       scale: 1.5,
@@ -60,34 +63,37 @@ export default function SampleBox(props: BoxProps) {
   }, [])
 
   const geom = useMemo(() => {
-    return new THREE.BoxBufferGeometry()
+    const geom = new THREE.BoxBufferGeometry(1,1,1)
+    return geom
   }, [])
 
-  const LineSecmentContents = React.memo(props => {
+  const handleRayCast = (raycaster: any, intersects: any) => {
+    //console.log(intersects)
+  }
+
+  const LineSecmentContents = useMemo(() => {
+    //console.log("render LineSecmentContents", geom)
     return (
-      <a.mesh {...props} ref={refMesh} scale={scale} rotation-x={rotation} onPointerEnter={handleOnPointerOver} onPointerLeave={handleOnPointerOut}>
-        <lineSegments>
-          <edgesGeometry attach='geometry' args={[geom]}/>
-          <lineBasicMaterial attach='material' transparent />
-        </lineSegments>
-      </a.mesh>
+      <a.lineSegments position={props.position} visible={hoverd} scale={scale} >
+        <edgesGeometry attach='geometry' args={[geom]} />
+        <lineBasicMaterial attach='material' color="#fff"/>
+      </a.lineSegments>
     )
-  })
-  const Contents = React.memo(props => {
+  }, [hoverd, scale])
+  const Contents = useMemo(() => {
+    //console.log("render Contents")
     return (
-      <a.mesh {...props} ref={refMesh} scale={scale} rotation-x={rotation} onPointerEnter={handleOnPointerOver} onPointerLeave={handleOnPointerOut}>
+      <a.mesh {...props} visible={!hoverd} scale={scale} onPointerOver={handleOnPointerOver} onPointerOut={handleOnPointerOut}>
         <boxBufferGeometry attach='geometry' />
         <meshPhongMaterial attach='material' transparent />
       </a.mesh>
     )
-  })
+  }, [hoverd, scale])
 
   return (
     <>
-      {hoverd
-        ? <LineSecmentContents {...props} />
-        : <Contents {...props} />
-      }
+      {LineSecmentContents}
+      {Contents}
     </>
   )
 }

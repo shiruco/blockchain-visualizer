@@ -25,9 +25,9 @@ export default function App() {
     useEffect(() => {
       const angle = (delta as number) / 2000 * -1
       //   console.log(angle)
-      // camera.rotation.x = angle
-      // camera.rotation.y = angle
-      // camera.rotation.z = angle
+      camera.rotation.x = angle
+      camera.rotation.y = angle
+      camera.rotation.z = angle
     }, [delta])
 
     useFrame(({clock}) => {
