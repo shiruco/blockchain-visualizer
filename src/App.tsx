@@ -1,6 +1,6 @@
 import React, { Suspense, useMemo, useEffect, useState, useRef, useCallback } from 'react'
 import { Canvas, useThree, Euler, useFrame, ReactThreeFiber } from 'react-three-fiber'
-import { Mesh } from 'three'
+import * as THREE from 'three'
 import { SpringValue, useSpring, config } from '@react-spring/core'
 import { a } from '@react-spring/three'
 import styled from 'styled-components'
@@ -9,7 +9,11 @@ import _ from 'lodash'
 import SampleBox from './components/SampleBox'
 import useYScroll from './helpers/useYScroll'
 
+
+
 export default function App() {
+  //console.log("App render")
+
   // tick
   const [tick, setTick] = useState(0)
   useInterval(() => {
@@ -21,7 +25,7 @@ export default function App() {
   let posX = (dis as SpringValue<number>).to((dis: number) => (dis / 1000) * 25 * -1)
 
   function Test() {
-    const camera = useThree(state => state.camera)
+    const { camera, scene } = useThree()
     useEffect(() => {
       const angle = (delta as number) / 2000 * -1
       //   console.log(angle)
@@ -30,11 +34,21 @@ export default function App() {
       camera.rotation.z = angle
     }, [delta])
 
-    useFrame(({clock}) => {
-      //console.log(clock)
-    })
-
-
+    // const handleMouseMove = (e: MouseEvent) => {
+    //   mouse.x = ( e.clientX / window.innerWidth ) * 2 - 1
+    //   mouse.y = - ( e.clientY / window.innerHeight ) * 2 + 1
+    // }
+  
+    // useFrame(() => {
+    //   raycaster.setFromCamera( mouse, camera )
+    //   const intersects = raycaster.intersectObjects( scene.children, true )
+      
+    // })
+  
+    // useEffect(() => {
+    //   window.addEventListener("pointermove", handleMouseMove)
+    // }, [])
+  
 
     return null
   }

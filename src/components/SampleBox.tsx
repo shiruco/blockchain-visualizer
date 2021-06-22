@@ -6,7 +6,8 @@ import { a, Transition } from '@react-spring/three'
 import { SpringValue, useSpring, config } from '@react-spring/core'
 import { useFrame } from 'react-three-fiber'
 import { useHelper } from '@react-three/drei'
-import throttle from 'lodash/throttle';
+import throttle from 'lodash/throttle'
+import { useMousePosition } from '../hooks/useMousePosition'
 
 type BoxProps = ReactThreeFiber.Object3DNode<Mesh, typeof Mesh> & {
   tick?: number
@@ -14,12 +15,7 @@ type BoxProps = ReactThreeFiber.Object3DNode<Mesh, typeof Mesh> & {
 
 export default function SampleBox(props: BoxProps) {
 
-  // const {
-  //   camera,
-  //   gl: { domElement }
-  // } = useThree()
-
-  // camera.position.set(2, 3, 4)
+  const {scene, camera} = useThree()
 
   const [hoverd, setHoverd] = useState(false)
 
@@ -68,10 +64,32 @@ export default function SampleBox(props: BoxProps) {
   //const [particlesData, setPerticlesData] = useState([] as any)
   const verticles: any[] = []
   const particlesData: any[] = []
+  const [pointRendering, setPointRendering] = useState(false)
+  const [pointer, setPointer] = useState({x: 0, y:0})
   const refPoint = useRef({} as Points)
 
+  const position = useMousePosition()
+
+  const raycaster = useMemo(() => {
+    return new THREE.Raycaster()
+  }, [])
+
+  const geom2 = useMemo(() => {
+    return new THREE.BufferGeometry()
+  }, [])
+
+  const mat = useMemo(() => {
+    return new THREE.PointsMaterial({
+      // 一つ一つのサイズ
+      size: 0.02,
+      // 色
+      color: 0xffffff,
+    })
+  }, [])
+
   const TxPoints = useMemo(() => {
-    console.log("TxPoints")
+    if (!pointRendering) return
+    //console.log("TxPoints")
     const SIZE = 1.5
     const LENGTH = 200
     
@@ -97,30 +115,24 @@ export default function SampleBox(props: BoxProps) {
         } )
       }
     }
-
-    // 形状データを作成
-    const geometry = new THREE.BufferGeometry()
-    geometry.setAttribute('position', new THREE.Float32BufferAttribute(verticles, 3).setUsage( THREE.DynamicDrawUsage ))
     
-    // マテリアルを作成
-    const material = new THREE.PointsMaterial({
-      // 一つ一つのサイズ
-      size: 0.02,
-      // 色
-      color: 0xffffff,
-    })
-    
+    geom2.setAttribute('position', new THREE.Float32BufferAttribute(verticles, 3).setUsage( THREE.DynamicDrawUsage ))
+    console.log("tx render")
     return (
-      <points ref={refPoint} position={props.position} visible={hoverd} args={[geometry, material]} />
+      <points ref={refPoint} position={props.position} visible={hoverd} args={[geom2, mat]} />
     )
-  },[hoverd])
+  },[hoverd, pointRendering])
 
   const refLineSegments = useRef({} as LineSegments)
 
   useFrame(() => {
-    let vertexpos = 0
-    let colorpos = 0
-    let numConnected = 0
+    if (!hoverd) {
+      setPointRendering(false)
+      return
+    } else {
+      setPointRendering(true)
+    }
+    //console.log("frame")
 
     for ( let i = 0; i < 200; i ++ ) {
 
@@ -128,14 +140,21 @@ export default function SampleBox(props: BoxProps) {
       if(!particlesData[i]) continue
       const particleData = particlesData[ i ];
 
-      verticles[ i * 3 ] += particleData.velocity.x;
-      verticles[ i * 3 + 1 ] += particleData.velocity.y;
-      verticles[ i * 3 + 2 ] += particleData.velocity.z;
+      // verticles[ i * 3 ] += particleData.velocity.x;
+      // verticles[ i * 3 + 1 ] += particleData.velocity.y;
+      // verticles[ i * 3 + 2 ] += particleData.velocity.z;
     }
-    //refLineSegments.current.geometry.attributes.position.needsUpdate = true
-    //refPoint.current.geometry.attributes.position.needsUpdate = true
-  })
 
+    if (refPoint.current && Object.keys(refPoint.current).length) {
+      raycaster.setFromCamera( position, camera )
+      const intersects = raycaster.intersectObjects( [ refPoint.current ], true )
+      if (intersects.length > 0) {
+        const i: any = intersects[0]
+        const p = i.object as Points
+      }
+    }
+    
+  })
 
   const LineSecmentContents = useMemo(() => {
     //console.log("render LineSecmentContents", geom)
