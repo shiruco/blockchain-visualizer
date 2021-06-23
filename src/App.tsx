@@ -55,8 +55,7 @@ export default function App() {
 
   return (
     <Container>
-      <Canvas camera={{position: [0,0,5], fov: 60}}>
-        <color attach="background" args={["gray"]} />
+      <Canvas camera={{position: [0,0,5], fov: 60}} >
         {/* <fog attach="fog" args={['#cc7b32', 0, 500]} /> */}
         <Test />
         <ambientLight />
@@ -86,4 +85,5 @@ export default function App() {
 const Container = styled.div`
   width: 100vw;
   height: 100vh;
+  background: radial-gradient(ellipse at 50% -150%, #414141 0%, #dddddd 99%);
 `

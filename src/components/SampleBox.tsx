@@ -1,7 +1,7 @@
 import React, { useRef, useCallback, useEffect, useState, useMemo } from 'react'
-import { ReactThreeFiber, useThree } from 'react-three-fiber'
+import { ReactThreeFiber, useThree, Vector3 } from 'react-three-fiber'
 import * as THREE from 'three'
-import { LineSegments, Mesh, Object3D, Points } from 'three'
+import { Group, InstancedMesh, LineSegments, Mesh, Points } from 'three'
 import { a, Transition } from '@react-spring/three'
 import { SpringValue, useSpring, config } from '@react-spring/core'
 import { useFrame } from 'react-three-fiber'
@@ -12,6 +12,11 @@ import { useMousePosition } from '../hooks/useMousePosition'
 type BoxProps = ReactThreeFiber.Object3DNode<Mesh, typeof Mesh> & {
   tick?: number
 }
+
+const matrix = new THREE.Matrix4()
+const color = new THREE.Color(0xff0000)
+
+
 
 export default function SampleBox(props: BoxProps) {
 
@@ -60,13 +65,10 @@ export default function SampleBox(props: BoxProps) {
     return geom
   }, [])
 
-  //const [verticles, setVerticles] = useState([] as any)
-  //const [particlesData, setPerticlesData] = useState([] as any)
   const verticles: any[] = []
   const particlesData: any[] = []
   const [pointRendering, setPointRendering] = useState(false)
-  const [pointer, setPointer] = useState({x: 0, y:0})
-  const refPoint = useRef({} as Points)
+  const refTxPoints = useRef({} as Group)
 
   const position = useMousePosition()
 
@@ -75,51 +77,94 @@ export default function SampleBox(props: BoxProps) {
   }, [])
 
   const geom2 = useMemo(() => {
-    return new THREE.BufferGeometry()
+    return new THREE.BoxBufferGeometry(0.02, 0.02, 0.02)
   }, [])
 
   const mat = useMemo(() => {
-    return new THREE.PointsMaterial({
-      // 一つ一つのサイズ
-      size: 0.02,
+    return new THREE.MeshPhongMaterial({
       // 色
-      color: 0xffffff,
+      color: 0xff0000,
     })
   }, [])
 
+  
+
+  const Tx = () => {
+    const SIZE = 1.5
+    const x = SIZE * (Math.random() - 0.5)
+    const y = SIZE * (Math.random() - 0.5)
+    const z = SIZE * (Math.random() - 0.5)
+
+    const refX = useRef(x)
+    const refY = useRef(y)
+    const refZ = useRef(z)
+    
+    // tempObject.position.set(x, y, z)
+    // tempObject.updateMatrix()
+
+    // const usePrevious = (value: any) => {
+    //   const ref = useRef(value)
+    //   useEffect(() => {
+    //       ref.current = value
+    //   })
+    //   return ref.current
+    // }
+
+    const ref = useRef({} as InstancedMesh)
+    const [pos, setPos] = useState([x, y, z] as Vector3)
+    useEffect(() => {
+      console.log("tx use effect")
+      // ref.current.setMatrixAt(0, matrix)
+      // ref.current.setColorAt(0, color)
+    }, [])
+
+    // useFrame(() => {
+    //   // let x = refX.current
+    //   // if (x + 0.01 > 1 || x + 0.01 < -1) {
+    //   //   x = x - 0.01
+    //   // } else {
+    //   //   x = x + 0.01
+    //   // }
+
+    //   // let y = refY.current
+    //   // if (y + 0.01 > 1 || y + 0.01 < -1) {
+    //   //   y -= 0.01
+    //   // } else {
+    //   //   y += 0.01
+    //   // }
+
+    //   // let z = refZ.current
+    //   // if (z + 0.01 > 1 || z + 0.01 < -1) {
+    //   //   z -= 0.01
+    //   // } else {
+    //   //   z += 0.01
+    //   // }
+
+    //   const x = refX.current += 0.01
+    //   const y = refY.current += 0.01
+    //   const z = refZ.current += 0.01
+    //   console.log(x,y,z)
+    //   setPos([x, y, z])
+    // })
+
+    console.log("tx render")
+    const m = new THREE.MeshLambertMaterial({ color: 0xffffff })
+
+    return (
+      <mesh ref={ref} position={pos} args={[geom2, m]}/>
+    )
+  }
+
   const TxPoints = useMemo(() => {
     if (!pointRendering) return
-    //console.log("TxPoints")
-    const SIZE = 1.5
-    const LENGTH = 200
     
-    if (particlesData.length === 0) {
-      for (let i = 0; i < LENGTH; i++) {
-        const x = SIZE * (Math.random() - 0.5)
-        const y = SIZE * (Math.random() - 0.5)
-        const z = SIZE * (Math.random() - 0.5)
-      
-        verticles.push(x, y, z)
-        // setVerticles((old: any[]) => [...old, x, y, z])
+    console.log("TxPoints render")
 
-        // setPerticlesData((old: any[]) => [...old, {
-        //   velocity: new THREE.Vector3(Math.random() * 0.1, Math.random() * 0.1, Math.random() * 0.1 ),
-        //   numConnections: 0
-        // }])
-
-
-  
-        particlesData.push( {
-          velocity: new THREE.Vector3(Math.random() * 0.1, Math.random() * 0.1, Math.random() * 0.1 ),
-          numConnections: 0
-        } )
-      }
-    }
-    
-    geom2.setAttribute('position', new THREE.Float32BufferAttribute(verticles, 3).setUsage( THREE.DynamicDrawUsage ))
-    console.log("tx render")
+    console.log(hoverd)
     return (
-      <points ref={refPoint} position={props.position} visible={hoverd} args={[geom2, mat]} />
+      <group ref={refTxPoints} position={props.position} visible={hoverd}>
+        {hoverd && [...Array(300)].map((_, i) => <Tx key={i} />)}
+      </group>
     )
   },[hoverd, pointRendering])
 
@@ -134,23 +179,22 @@ export default function SampleBox(props: BoxProps) {
     }
     //console.log("frame")
 
-    for ( let i = 0; i < 200; i ++ ) {
-
-      // get the particle
-      if(!particlesData[i]) continue
-      const particleData = particlesData[ i ];
-
-      // verticles[ i * 3 ] += particleData.velocity.x;
-      // verticles[ i * 3 + 1 ] += particleData.velocity.y;
-      // verticles[ i * 3 + 2 ] += particleData.velocity.z;
-    }
-
-    if (refPoint.current && Object.keys(refPoint.current).length) {
+    if (refTxPoints.current && Object.keys(refTxPoints.current).length) {
       raycaster.setFromCamera( position, camera )
-      const intersects = raycaster.intersectObjects( [ refPoint.current ], true )
+      const intersects = raycaster.intersectObjects( refTxPoints.current.children, true )
       if (intersects.length > 0) {
-        const i: any = intersects[0]
-        const p = i.object as Points
+        const i: any = intersects[0].object
+        const m: THREE.MeshLambertMaterial = i.material
+        m.color = new THREE.Color(0xff0000)
+
+        // const id: number = i.instanceId
+        // const m = i.object as InstancedMesh
+        // //console.log(i)
+        // if (m.instanceColor) {  
+        //   // m.setColorAt(id, color.setHex(Math.random() * 0xff0000))
+        //   // m.instanceColor.needsUpdate = true
+        //   console.log("!")
+        // }
       }
     }
     
