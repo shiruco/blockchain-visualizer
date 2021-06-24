@@ -1,19 +1,73 @@
-import React, { Suspense, useMemo, useEffect, useState, useRef, useCallback } from 'react'
-import { Canvas, useThree, Euler, useFrame, ReactThreeFiber } from 'react-three-fiber'
-import * as THREE from 'three'
-import { SpringValue, useSpring, config } from '@react-spring/core'
+import React, { Suspense, useEffect, useState, useRef, useMemo, useCallback } from 'react'
+import { Object3D, InstancedMesh, PlaneGeometry, MeshBasicMaterial, SphereGeometry, BoxGeometry } from 'three';
+import { Canvas, useThree, useFrame } from 'react-three-fiber'
 import { a } from '@react-spring/three'
+import { SpringValue, useSpring, animated, config } from 'react-spring'
+import { Stats } from '@react-three/drei'
 import styled from 'styled-components'
 import useInterval from 'use-interval'
-import _ from 'lodash'
-import SampleBox from './components/SampleBox'
+import Box from './components/Box'
 import useYScroll from './helpers/useYScroll'
 
+function Swarm({ count }: { count: number }) {
+  const mesh = useRef({} as InstancedMesh)
+  const light = useRef({} as any)
+  const { size, viewport } = useThree()
+  const aspect = size.width / viewport.width
+
+  const dummy = useMemo(() => new Object3D(), [])
+  const particles = useMemo(() => {
+    const temp = []
+    for (let i = 0; i < count; i++) {
+      const t = Math.random() * 100
+      const factor = 20 + Math.random() * 100
+      const speed = 0.01 + Math.random() / 200
+      const xFactor = -50 + Math.random() * 100
+      const yFactor = -50 + Math.random() * 100
+      const zFactor = -50 + Math.random() * 100
+      temp.push({ t, factor, speed, xFactor, yFactor, zFactor, mx: 0, my: 0 })
+    }
+    return temp
+  }, [count])
+  
+  useFrame(state => {
+
+    particles.forEach((particle, i) => {
+      let { t, factor, speed, xFactor, yFactor, zFactor } = particle
+      t = particle.t += speed / 2
+      const a = Math.cos(t) + Math.sin(t * 1) / 10
+      const b = Math.sin(t) + Math.cos(t * 2) / 10
+      const s = Math.cos(t) * 0.2
+      particle.mx += particle.mx * 0.01
+      particle.my += particle.my * 0.01
+      
+      dummy.position.set(
+        (particle.mx / 10) * a + xFactor + Math.cos((t / 10) * factor) + (Math.sin(t * 1) * factor) / 10,
+        (particle.my / 10) * b + yFactor + Math.sin((t / 10) * factor) + (Math.cos(t * 2) * factor) / 10,
+        (particle.my / 10) * b + zFactor + Math.cos((t / 10) * factor) + (Math.sin(t * 3) * factor) / 10
+      )
+      dummy.scale.set(s, s, s)
+      
+      dummy.updateMatrix()
+      
+      mesh.current.setMatrixAt(i, dummy.matrix)
+    })
+    mesh.current.instanceMatrix.needsUpdate = true
+  })
+  return (
+    <>
+      <pointLight ref={light} distance={40} intensity={8} color="lightblue" />
+      <instancedMesh ref={mesh} args={[new PlaneGeometry( 1, 1, 1 ), new MeshBasicMaterial(), count]}>
+        <dodecahedronBufferGeometry attach="geometry" args={[0.2, 0]} />
+        <meshPhongMaterial attach="material" color="#ccc" />
+      </instancedMesh>
+    </>
+  )
+}
 
 
 export default function App() {
-  //console.log("App render")
-
+  
   // tick
   const [tick, setTick] = useState(0)
   useInterval(() => {
@@ -21,69 +75,67 @@ export default function App() {
   }, 1000)
 
   // scroll
-  const [dis, delta] = useYScroll([-2000, 0], { domTarget: window })
+  const [dis, delta] = useYScroll([-3800, 0], { domTarget: window })
   let posX = (dis as SpringValue<number>).to((dis: number) => (dis / 1000) * 25 * -1)
 
-  function Test() {
-    const { camera, scene } = useThree()
+  const [bgStyle, setBgColor] = useSpring(() => ({
+    width: "100vw",
+    height: "100vh",
+    background: "radial-gradient(ellipse at 50% -100%, #222222 0%, #a4a2a2 99%)",
+  }))
+
+  function CameraPosition() {
+    const { camera } = useThree()
     useEffect(() => {
       const angle = (delta as number) / 2000 * -1
-      //   console.log(angle)
       camera.rotation.x = angle
       camera.rotation.y = angle
       camera.rotation.z = angle
     }, [delta])
 
-    // const handleMouseMove = (e: MouseEvent) => {
-    //   mouse.x = ( e.clientX / window.innerWidth ) * 2 - 1
-    //   mouse.y = - ( e.clientY / window.innerHeight ) * 2 + 1
-    // }
-  
-    // useFrame(() => {
-    //   raycaster.setFromCamera( mouse, camera )
-    //   const intersects = raycaster.intersectObjects( scene.children, true )
-      
-    // })
-  
-    // useEffect(() => {
-    //   window.addEventListener("pointermove", handleMouseMove)
-    // }, [])
-  
-
     return null
   }
 
+  const onHoverOverBox = useCallback(() => {
+    setBgColor({
+      background: "radial-gradient(ellipse at 50% -100%, #222222 0%, #2c2c2c 99%)",
+      config: config.slow
+    })
+  }, [])
+
+  const onHoverOutBox = useCallback(() => {
+    setBgColor({
+      background: "radial-gradient(ellipse at 50% -100%, #222222 0%, #a4a2a2 99%)",
+      config: config.slow
+    })
+  }, [])
+
   return (
-    <Container>
+    <animated.div style={bgStyle}>
       <Canvas camera={{position: [0,0,5], fov: 60}} >
-        {/* <fog attach="fog" args={['#cc7b32', 0, 500]} /> */}
-        <Test />
+        <CameraPosition />
         <ambientLight />
-        <pointLight position={[10, 10, 10]} />
+        <pointLight distance={100} intensity={1} position={[0, -50, 10]} color="#ccc" />
         <Suspense fallback={null}>
           <a.group position-x={posX}>
-            <SampleBox key={1} position={[-50,0,0]} tick={tick}/>
-            <SampleBox key={2} position={[-45,0,0]} tick={tick}/>
-            <SampleBox key={3} position={[-40,0,0]} tick={tick}/>
-            <SampleBox key={4} position={[-35,0,0]} tick={tick}/>
-            <SampleBox key={5} position={[-30,0,0]} tick={tick}/>
-            <SampleBox key={6} position={[-25,0,0]} tick={tick}/>
-            <SampleBox key={7} position={[-20,0,0]} tick={tick}/>
-            <SampleBox key={8} position={[-15,0,0]} tick={tick}/>
-            <SampleBox key={9} position={[-10,0,0]} tick={tick}/>
-            <SampleBox key={10} position={[-5,0,0]} tick={tick}/>
-            <SampleBox key={11} position={[0,0,0]}  tick={tick}/>
+            { [...Array(20)].map((_, i) => {
+              return (
+                <Box key={i} index={i} position={[-5 * i, 0, 0]} tick={tick} onHoverOver={onHoverOverBox} onHoverOut={onHoverOutBox}/>
+              )
+            }) }
           </a.group>
-          {/* <Controls enableZoom={false} autoRotate={true} maxDistance={20} maxPolarAngle={Math.PI * 0.45} enableDamping={true} /> */}
-          {/* <gridHelper /> */}
         </Suspense>
+        <Swarm count={1500} />
+        <Stats />
       </Canvas>
-    </Container>
+    </animated.div>
   )
 }
 
-const Container = styled.div`
-  width: 100vw;
-  height: 100vh;
-  background: radial-gradient(ellipse at 50% -150%, #414141 0%, #dddddd 99%);
-`
+// const Container = animated(styled.div)`
+//   width: 100vw;
+//   height: 100vh;
+//   //background: radial-gradient(ellipse at 50% -150%, #414141 0%, #dddddd 99%);
+//   //background: radial-gradient(ellipse at 50% -100%, #222222 0%, #a4a2a2 99%);
+//   //background: radial-gradient(ellipse at 50% -100%, #020b14 0%, #0c2947 99%);
+// `
