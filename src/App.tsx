@@ -1,6 +1,6 @@
 import React, { Suspense, useEffect, useState, useRef, useMemo, useCallback } from 'react'
 import { Object3D, InstancedMesh, PlaneGeometry, MeshBasicMaterial, SphereGeometry, BoxGeometry } from 'three';
-import { Canvas, useThree, useFrame } from 'react-three-fiber'
+import { Canvas, useThree, useFrame } from '@react-three/fiber'
 import { a } from '@react-spring/three'
 import { SpringValue, useSpring, animated, config } from 'react-spring'
 import { Stats } from '@react-three/drei'

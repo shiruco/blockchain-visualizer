@@ -1,5 +1,5 @@
 import React, { useRef, useMemo, useEffect } from 'react'
-import { extend, ReactThreeFiber, useThree, useFrame } from 'react-three-fiber'
+import { extend, ReactThreeFiber, useThree, useFrame } from '@react-three/fiber'
 import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls'
 
 // Extend will make OrbitControls available as a JSX element called orbitControls for us to use.

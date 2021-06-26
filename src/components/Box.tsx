@@ -1,5 +1,5 @@
 import React, { useRef, useCallback, useEffect, useState, useMemo } from 'react'
-import { ReactThreeFiber, useThree, useFrame } from 'react-three-fiber'
+import { ReactThreeFiber, useThree, useFrame } from '@react-three/fiber'
 import * as THREE from 'three'
 import { Group, InstancedMesh, Mesh, Vector3, BufferGeometry } from 'three'
 import { a } from '@react-spring/three'
@@ -140,7 +140,7 @@ export default function Box(props: BoxProps) {
     return (
       <a.mesh {...props} visible={!hoverd} scale={scale} rotation-x={rotation} onPointerOver={handleOnPointerOver} onPointerOut={handleOnPointerOut}>
         <boxBufferGeometry attach='geometry' />
-        <meshPhongMaterial attach='material' color="#ccc" transparent />
+        <meshStandardMaterial attach='material' color="#ccc" roughness={0.4} />
       </a.mesh>
     )
   }, [hoverd, scale])
