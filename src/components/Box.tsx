@@ -1,5 +1,6 @@
 import React, { useRef, useCallback, useEffect, useState, useMemo } from 'react'
 import { ReactThreeFiber, useThree, useFrame } from '@react-three/fiber'
+import { Html } from "@react-three/drei"
 import * as THREE from 'three'
 import { Group, InstancedMesh, Mesh, Vector3, BufferGeometry } from 'three'
 import { a } from '@react-spring/three'
@@ -11,14 +12,21 @@ type BoxProps = ReactThreeFiber.Object3DNode<Mesh, typeof Mesh> & {
   onHoverOver: () => any
   onHoverOut: () => any
 }
+type TxProps = {
+  name: string
+}
 
-let position = { x: 0, y: 0 }
+let mousePosition = { x: 0, y: 0 }
+let intersectedTx: any
 
 export default function Box(props: BoxProps) {
+  //console.log(props.position)
   
   const {camera} = useThree()
 
   const [hoverd, setHoverd] = useState(false)
+  const [intersected, setIntersected] = useState(false)
+  const [txLabelPosition, setTxLabelPosition] = useState(new THREE.Vector3())
 
   const [{ rotation }, setRotation] = useSpring(() => ({
     rotation: 0
@@ -40,10 +48,13 @@ export default function Box(props: BoxProps) {
   const handleMouseMove = useCallback((e: MouseEvent) => {
     const x = ( e.clientX / window.innerWidth ) * 2 - 1
     const y = - ( e.clientY / window.innerHeight ) * 2 + 1
-    position = { x: x, y: y }
+    mousePosition = { x: x, y: y }
   }, [])
 
-  const handleOnPointerOver = useCallback(() => {
+  const handleOnPointerOver = useCallback((e: PointerEvent) => {
+    e.stopPropagation()
+    //e.preventDefault()
+
     setHoverd(true)
     setPointRendering(true)
     setScale({
@@ -57,7 +68,9 @@ export default function Box(props: BoxProps) {
 
   }, [setScale])
 
-  const handleOnPointerOut = useCallback(() => {
+  const handleOnPointerOut = useCallback((e: PointerEvent) => {
+    e.stopPropagation()
+
     setHoverd(false)
     setPointRendering(false)
     setScale({
@@ -86,25 +99,24 @@ export default function Box(props: BoxProps) {
     return new THREE.BoxBufferGeometry(0.02, 0.02, 0.02)
   }, [])
 
-  const Tx = () => {
+  const Tx = React.memo((props: TxProps) => {
     const SIZE = 1.5
     const x = SIZE * (Math.random() - 0.5)
     const y = SIZE * (Math.random() - 0.5)
     const z = SIZE * (Math.random() - 0.5)
 
-    const ref = useRef({} as InstancedMesh)
     const m = new THREE.MeshLambertMaterial({ color: 0xffffff })
 
     return (
-      <mesh ref={ref} position={[x, y, z]} args={[txGeom, m]}/>
+      <mesh name={props.name} position={[x, y, z]} args={[txGeom, m]}/>
     )
-  }
+  })
 
   const TxPoints = useMemo(() => {
     if (!pointRendering) return
     return (
       <group ref={refTxPoints} position={props.position} visible={hoverd}>
-        {hoverd && [...Array(300)].map((_, i) => <Tx key={i} />)}
+        {hoverd && [...Array(300)].map((_, i) => <Tx key={i} name={`transaction ${i}`} />)}
       </group>
     )
   },[hoverd, pointRendering])
@@ -114,12 +126,35 @@ export default function Box(props: BoxProps) {
     if (refTxPoints.current && Object.keys(refTxPoints.current).length) {
 
       if (hoverd) {
-        raycaster.setFromCamera( position, camera )
+        raycaster.setFromCamera( mousePosition, camera )
         const intersects = raycaster.intersectObjects( refTxPoints.current.children, true )
         if (intersects.length > 0) {
-          const i: any = intersects[0].object
-          const m: THREE.MeshLambertMaterial = i.material
-          m.color = new THREE.Color(0xff0000)
+          if (intersectedTx != intersects[0].object) {
+            if (intersectedTx) {
+              intersectedTx.material.color = new THREE.Color("#ffffff")
+            }
+            intersectedTx = intersects[0].object
+            intersectedTx.material.color = new THREE.Color("#ff3b00")
+
+            if (props.position) {
+              const pos = props.position as number[]
+              const targetPos = new THREE.Vector3(
+                pos[0] + intersectedTx.position.x,
+                intersectedTx.position.y - 0.3,
+                0
+              )
+              setIntersected(true)
+              setTxLabelPosition(targetPos)
+            }
+          }
+          
+        } else {
+          if (intersectedTx) {
+            intersectedTx.material.color = new THREE.Color("#ffffff")
+          }
+          intersectedTx = null
+          setIntersected(false)
+          setTxLabelPosition(new THREE.Vector3(-9999, -9999, -9999))
         }
       }
     }
@@ -155,11 +190,11 @@ export default function Box(props: BoxProps) {
       points.push(new Vector3(x - 1.5, 0, 0))
       points.push(new Vector3(x - 3.5 , 0, 0))
       refLine.current.setFromPoints(points)
+
     }
   },[])
   
   const Line = useMemo(() => {
-    
     return (
       <lineSegments>
         <bufferGeometry ref={refLine} attach="geometry" />
@@ -168,12 +203,77 @@ export default function Box(props: BoxProps) {
     )
   }, [scale])
 
+  const Label = useMemo(() => {
+    const position = props.position as number[]
+    const posX = position[0] != 0 ? position[0] : 0
+    const x = posX - 0.8
+    const y = position[1] + 1.6
+
+    return (
+      <mesh position={[x, y, 0]}>
+        <Html style={{display: hoverd ? "none" : "block"}} distanceFactor={5}>
+          <div className="block-content">
+            <div className="number">#12715552</div>
+            <div className="hexColor">
+              <span className="label">blockHash</span>
+              <span>0x</span>
+              <span className="hexColorBox" style={{backgroundColor: "#" + Math.floor(Math.random() * 16777215).toString(16)}}></span>
+              <span className="hexColorBox" style={{backgroundColor: "#" + Math.floor(Math.random() * 16777215).toString(16)}}></span>
+              <span className="hexColorBox" style={{backgroundColor: "#" + Math.floor(Math.random() * 16777215).toString(16)}}></span>
+              <span className="hexColorBox" style={{backgroundColor: "#" + Math.floor(Math.random() * 16777215).toString(16)}}></span>
+              <span className="hexColorBox" style={{backgroundColor: "#" + Math.floor(Math.random() * 16777215).toString(16)}}></span>
+              <span className="hexColorBox" style={{backgroundColor: "#" + Math.floor(Math.random() * 16777215).toString(16)}}></span>
+              <span className="hexColorBox" style={{backgroundColor: "#" + Math.floor(Math.random() * 16777215).toString(16)}}></span>
+            </div>
+            <div className="hexColor">
+              <span className="label">miner</span>
+              <span>0x</span>
+              <span className="hexColorBox" style={{backgroundColor: "#" + Math.floor(Math.random() * 16777215).toString(16)}}></span>
+              <span className="hexColorBox" style={{backgroundColor: "#" + Math.floor(Math.random() * 16777215).toString(16)}}></span>
+              <span className="hexColorBox" style={{backgroundColor: "#" + Math.floor(Math.random() * 16777215).toString(16)}}></span>
+              <span className="hexColorBox" style={{backgroundColor: "#" + Math.floor(Math.random() * 16777215).toString(16)}}></span>
+              <span className="hexColorBox" style={{backgroundColor: "#" + Math.floor(Math.random() * 16777215).toString(16)}}></span>
+              <span className="hexColorBox" style={{backgroundColor: "#" + Math.floor(Math.random() * 16777215).toString(16)}}></span>
+              <span className="hexColorBox" style={{backgroundColor: "#" + Math.floor(Math.random() * 16777215).toString(16)}}></span>
+            </div>
+            
+          </div>
+        </Html>
+      </mesh>
+    )
+  }, [hoverd])
+
+  const TxLabel = useMemo(() => {
+    //console.log(txLabelPosition)
+    return (
+      <mesh position={txLabelPosition}>
+        <Html style={{display: !intersected ? "none" : "block"}} distanceFactor={5}>
+          <div className="tx-content">
+            <div className="hexColor">
+              <span className="label">TxHash</span>
+              <span>0x</span>
+              <span className="hexColorBox" style={{backgroundColor: "#" + Math.floor(Math.random() * 16777215).toString(16)}}></span>
+              <span className="hexColorBox" style={{backgroundColor: "#" + Math.floor(Math.random() * 16777215).toString(16)}}></span>
+              <span className="hexColorBox" style={{backgroundColor: "#" + Math.floor(Math.random() * 16777215).toString(16)}}></span>
+              <span className="hexColorBox" style={{backgroundColor: "#" + Math.floor(Math.random() * 16777215).toString(16)}}></span>
+              <span className="hexColorBox" style={{backgroundColor: "#" + Math.floor(Math.random() * 16777215).toString(16)}}></span>
+              <span className="hexColorBox" style={{backgroundColor: "#" + Math.floor(Math.random() * 16777215).toString(16)}}></span>
+              <span className="hexColorBox" style={{backgroundColor: "#" + Math.floor(Math.random() * 16777215).toString(16)}}></span>
+            </div>
+          </div>
+        </Html>
+      </mesh>
+    )
+  }, [intersected, txLabelPosition])
+
   return (
     <group>
       {LineSecmentContents}
       {Contents}
       {TxPoints}
       {Line}
+      {Label}
+      {TxLabel}
     </group>
   )
 }

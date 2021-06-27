@@ -8,6 +8,7 @@ import useInterval from 'use-interval'
 import Box from './components/Box'
 import Swarm from './components/Swarm'
 import useYScroll from './helpers/useYScroll'
+import './App.css'
 
 export default function App() {
   
