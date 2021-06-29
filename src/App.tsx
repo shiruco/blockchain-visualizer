@@ -5,10 +5,37 @@ import { SpringValue, useSpring, animated, config } from 'react-spring'
 import { Stats } from '@react-three/drei'
 import styled from 'styled-components'
 import useInterval from 'use-interval'
+import Web3 from "web3"
+import { BlockTransactionObject } from "web3-eth"
 import Box from './components/Box'
 import Swarm from './components/Swarm'
 import useYScroll from './helpers/useYScroll'
 import './App.css'
+
+const web3 = new Web3()
+web3.setProvider(new Web3.providers.HttpProvider('https://mainnet.infura.io/v3/96915aaef4e64bca88eeac18f8945aec'))
+let blocks: BlockTransactionObject[] = []
+const latest = async () => {
+  const latestBlockNumber = await (await web3.eth.getBlock('latest')).number
+  blocks = await Promise.all([
+    web3.eth.getBlock(latestBlockNumber, true),
+    web3.eth.getBlock(latestBlockNumber - 1, true),
+    web3.eth.getBlock(latestBlockNumber - 2, true),
+    web3.eth.getBlock(latestBlockNumber - 3, true),
+    web3.eth.getBlock(latestBlockNumber - 4, true),
+    web3.eth.getBlock(latestBlockNumber - 5, true),
+    web3.eth.getBlock(latestBlockNumber - 6, true),
+    web3.eth.getBlock(latestBlockNumber - 7, true),
+    web3.eth.getBlock(latestBlockNumber - 8, true),
+    web3.eth.getBlock(latestBlockNumber - 9, true),
+  ])
+  //console.log(blocks)
+
+  // const worker = await import('./worker')
+  // worker.default()
+}
+
+latest()
 
 export default function App() {
   
@@ -19,7 +46,8 @@ export default function App() {
   }, 1000)
 
   // scroll
-  const [dis, delta] = useYScroll([-3800, 0], { domTarget: window })
+  // 20 - 3800
+  const [dis, delta] = useYScroll([-1800, 0], { domTarget: window })
   let posX = (dis as SpringValue<number>).to((dis: number) => (dis / 1000) * 25 * -1)
 
   const [bgStyle, setBgColor] = useSpring(() => ({
@@ -54,21 +82,27 @@ export default function App() {
     })
   }, [])
 
+  if (blocks.length <= 0) {
+    return (
+      <>
+        loading...
+      </>
+    )
+  }
+
   return (
     <animated.div style={bgStyle}>
       <Canvas camera={{position: [0,0,5], fov: 60}} >
         <CameraPosition />
         <ambientLight />
         <pointLight distance={100} intensity={1} position={[0, -50, 10]} color="#ccc" />
-        <Suspense fallback={null}>
-          <a.group position-x={posX}>
-            { [...Array(20)].map((_, i) => {
-              return (
-                <Box key={i} index={i} position={[-5 * i, 0, 0]} tick={tick} onHoverOver={onHoverOverBox} onHoverOut={onHoverOutBox}/>
-              )
-            }) }
-          </a.group>
-        </Suspense>
+        <a.group position-x={posX}>
+          { blocks.map((block, i) => {
+            return (
+              <Box block={block} key={i} index={i} position={[-5 * i, 0, 0]} tick={tick} onHoverOver={onHoverOverBox} onHoverOut={onHoverOutBox}/>
+            )
+          }) }
+        </a.group>
         <Swarm count={1500} />
         <Stats />
       </Canvas>

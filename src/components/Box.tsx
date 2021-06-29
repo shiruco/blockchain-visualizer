@@ -1,32 +1,42 @@
 import React, { useRef, useCallback, useEffect, useState, useMemo } from 'react'
 import { ReactThreeFiber, useThree, useFrame } from '@react-three/fiber'
 import { Html } from "@react-three/drei"
+import { BlockTransactionObject } from "web3-eth"
 import * as THREE from 'three'
 import { Group, InstancedMesh, Mesh, Vector3, BufferGeometry } from 'three'
 import { a } from '@react-spring/three'
 import { useSpring, config } from '@react-spring/core'
+import { hash2Colors } from '../utils/hash2Colors'
 
 type BoxProps = ReactThreeFiber.Object3DNode<Mesh, typeof Mesh> & {
+  block: BlockTransactionObject
   index: number
   tick?: number
-  onHoverOver: () => any
-  onHoverOut: () => any
+  onHoverOver: () => void
+  onHoverOut: () => void
 }
 type TxProps = {
-  name: string
+  hash: string
+}
+type TxLabelProps = {
+  hash: string,
+  position: THREE.Vector3
 }
 
 let mousePosition = { x: 0, y: 0 }
 let intersectedTx: any
 
 export default function Box(props: BoxProps) {
-  //console.log(props.position)
+  //console.log(props.block.miner)
   
   const {camera} = useThree()
 
   const [hoverd, setHoverd] = useState(false)
   const [intersected, setIntersected] = useState(false)
-  const [txLabelPosition, setTxLabelPosition] = useState(new THREE.Vector3())
+  const [txLabel, setTxLabel] = useState<TxLabelProps>({
+    hash: "",
+    position: new THREE.Vector3()
+  })
 
   const [{ rotation }, setRotation] = useSpring(() => ({
     rotation: 0
@@ -107,8 +117,12 @@ export default function Box(props: BoxProps) {
 
     const m = new THREE.MeshLambertMaterial({ color: 0xffffff })
 
+    const handleTxClick = useCallback(() => {
+      window.location.href = `https://etherscan.io/tx/${props.hash}`
+    }, [])
+
     return (
-      <mesh name={props.name} position={[x, y, z]} args={[txGeom, m]}/>
+      <mesh name={props.hash} position={[x, y, z]} args={[txGeom, m]} onClick={handleTxClick}/>
     )
   })
 
@@ -116,7 +130,7 @@ export default function Box(props: BoxProps) {
     if (!pointRendering) return
     return (
       <group ref={refTxPoints} position={props.position} visible={hoverd}>
-        {hoverd && [...Array(300)].map((_, i) => <Tx key={i} name={`transaction ${i}`} />)}
+        {hoverd && props.block.transactions.map((tx, i) => <Tx key={i} hash={tx.hash} />)}
       </group>
     )
   },[hoverd, pointRendering])
@@ -144,7 +158,10 @@ export default function Box(props: BoxProps) {
                 0
               )
               setIntersected(true)
-              setTxLabelPosition(targetPos)
+              setTxLabel({
+                hash: intersectedTx.name,
+                position: targetPos
+              })
             }
           }
           
@@ -154,7 +171,10 @@ export default function Box(props: BoxProps) {
           }
           intersectedTx = null
           setIntersected(false)
-          setTxLabelPosition(new THREE.Vector3(-9999, -9999, -9999))
+          setTxLabel({
+            hash: "",
+            position: new THREE.Vector3(-9999, -9999, -9999)
+          })
         }
       }
     }
@@ -209,32 +229,36 @@ export default function Box(props: BoxProps) {
     const x = posX - 0.8
     const y = position[1] + 1.6
 
+    let blockHashJsx: JSX.Element[] | null = null
+    const blockHashes = hash2Colors(props.block.hash)
+    if (blockHashes && blockHashes.length) {
+      blockHashJsx = [<span key={`blockhash`}>0x</span>]
+      blockHashes.map((hex, i) => (
+        blockHashJsx?.push(<span key={`blockhash-${i}`} className="hexColorBox" style={{backgroundColor: "#" + hex}}></span>)
+      ))
+    }
+
+    let minerHashJsx: JSX.Element[] | null = null
+    const minerHashes = hash2Colors(props.block.miner)
+    if (minerHashes && minerHashes.length) {
+      minerHashJsx = [<span key={`miberhash`}>0x</span>]
+      minerHashes.map((hex, i) => (
+        minerHashJsx?.push(<span key={`minerhash-${i}`} className="hexColorBox" style={{backgroundColor: "#" + hex}}></span>)
+      ))
+    }
+
     return (
       <mesh position={[x, y, 0]}>
         <Html style={{display: hoverd ? "none" : "block"}} distanceFactor={5}>
           <div className="block-content">
-            <div className="number">#12715552</div>
+            <div className="number">{`#${props.block.number}`}</div>
             <div className="hexColor">
               <span className="label">blockHash</span>
-              <span>0x</span>
-              <span className="hexColorBox" style={{backgroundColor: "#" + Math.floor(Math.random() * 16777215).toString(16)}}></span>
-              <span className="hexColorBox" style={{backgroundColor: "#" + Math.floor(Math.random() * 16777215).toString(16)}}></span>
-              <span className="hexColorBox" style={{backgroundColor: "#" + Math.floor(Math.random() * 16777215).toString(16)}}></span>
-              <span className="hexColorBox" style={{backgroundColor: "#" + Math.floor(Math.random() * 16777215).toString(16)}}></span>
-              <span className="hexColorBox" style={{backgroundColor: "#" + Math.floor(Math.random() * 16777215).toString(16)}}></span>
-              <span className="hexColorBox" style={{backgroundColor: "#" + Math.floor(Math.random() * 16777215).toString(16)}}></span>
-              <span className="hexColorBox" style={{backgroundColor: "#" + Math.floor(Math.random() * 16777215).toString(16)}}></span>
+              { blockHashJsx }
             </div>
             <div className="hexColor">
               <span className="label">miner</span>
-              <span>0x</span>
-              <span className="hexColorBox" style={{backgroundColor: "#" + Math.floor(Math.random() * 16777215).toString(16)}}></span>
-              <span className="hexColorBox" style={{backgroundColor: "#" + Math.floor(Math.random() * 16777215).toString(16)}}></span>
-              <span className="hexColorBox" style={{backgroundColor: "#" + Math.floor(Math.random() * 16777215).toString(16)}}></span>
-              <span className="hexColorBox" style={{backgroundColor: "#" + Math.floor(Math.random() * 16777215).toString(16)}}></span>
-              <span className="hexColorBox" style={{backgroundColor: "#" + Math.floor(Math.random() * 16777215).toString(16)}}></span>
-              <span className="hexColorBox" style={{backgroundColor: "#" + Math.floor(Math.random() * 16777215).toString(16)}}></span>
-              <span className="hexColorBox" style={{backgroundColor: "#" + Math.floor(Math.random() * 16777215).toString(16)}}></span>
+              { minerHashJsx }
             </div>
             
           </div>
@@ -244,27 +268,27 @@ export default function Box(props: BoxProps) {
   }, [hoverd])
 
   const TxLabel = useMemo(() => {
-    //console.log(txLabelPosition)
+    let txHashJsx: JSX.Element[] | null = null
+    const txHashes = hash2Colors(txLabel.hash)
+    if (txHashes && txHashes.length) {
+      txHashJsx = [<span key={`miberhash`}>0x</span>]
+      txHashes.map((hex, i) => (
+        txHashJsx?.push(<span key={`txhash-${i}`} className="hexColorBox" style={{backgroundColor: "#" + hex}}></span>)
+      ))
+    }
     return (
-      <mesh position={txLabelPosition}>
+      <mesh position={txLabel.position}>
         <Html style={{display: !intersected ? "none" : "block"}} distanceFactor={5}>
           <div className="tx-content">
             <div className="hexColor">
               <span className="label">TxHash</span>
-              <span>0x</span>
-              <span className="hexColorBox" style={{backgroundColor: "#" + Math.floor(Math.random() * 16777215).toString(16)}}></span>
-              <span className="hexColorBox" style={{backgroundColor: "#" + Math.floor(Math.random() * 16777215).toString(16)}}></span>
-              <span className="hexColorBox" style={{backgroundColor: "#" + Math.floor(Math.random() * 16777215).toString(16)}}></span>
-              <span className="hexColorBox" style={{backgroundColor: "#" + Math.floor(Math.random() * 16777215).toString(16)}}></span>
-              <span className="hexColorBox" style={{backgroundColor: "#" + Math.floor(Math.random() * 16777215).toString(16)}}></span>
-              <span className="hexColorBox" style={{backgroundColor: "#" + Math.floor(Math.random() * 16777215).toString(16)}}></span>
-              <span className="hexColorBox" style={{backgroundColor: "#" + Math.floor(Math.random() * 16777215).toString(16)}}></span>
+              { txHashJsx }
             </div>
           </div>
         </Html>
       </mesh>
     )
-  }, [intersected, txLabelPosition])
+  }, [intersected, txLabel])
 
   return (
     <group>
