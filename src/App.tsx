@@ -3,31 +3,53 @@ import { Canvas, useThree } from '@react-three/fiber'
 import { a } from '@react-spring/three'
 import { SpringValue, useSpring, animated, config } from 'react-spring'
 import { Stats } from '@react-three/drei'
-import styled from 'styled-components'
 import useInterval from 'use-interval'
 import Web3 from "web3"
 import { BlockTransactionObject } from "web3-eth"
+import PromiseQueue from 'promise-queue'
 import Box from './components/Box'
 import Swarm from './components/Swarm'
 import useYScroll from './helpers/useYScroll'
+import WssWorker from './wss.worker'
 import './App.css'
 
-const web3 = new Web3()
-web3.setProvider(new Web3.providers.HttpProvider('https://mainnet.infura.io/v3/96915aaef4e64bca88eeac18f8945aec'))
-let blocks: BlockTransactionObject[] = []
-const init = async () => {
-  const latestBlockNumber = await (await web3.eth.getBlock('latest')).number
-  blocks = await Promise.all([...Array(10)].map((_, i) => web3.eth.getBlock(latestBlockNumber - i, true)))
-  //console.log(require('./worker.js'))
-  const worker = new Worker(require('./worker.js'))
-  // worker.addEventListener('message', (message) => {
-  //   console.log(message)
-  // })
-}
-
-init()
-
 export default function App() {
+
+  const [blocks, setBlocks] = useState<BlockTransactionObject[]>([])
+
+  const addBlock = () => {
+    console.log(blocks)
+  }
+
+  useEffect(() => {
+    const web3 = new Web3()
+    web3.setProvider(new Web3.providers.HttpProvider('https://mainnet.infura.io/v3/96915aaef4e64bca88eeac18f8945aec'))
+
+    // block hash's queue
+    //const queue = new PromiseQueue(1, Infinity)
+
+    const func = async () => {
+      const worker = new WssWorker()
+      worker.addEventListener('message', async (message) => {
+        const obj = JSON.parse(message.data)
+        if (obj.params) {
+          const newBlockNumber = parseInt(obj.params.result.number, 16)
+          addBlock()
+          // check latest block number
+          console.log("add",blocks,newBlockNumber)
+          if (true) {
+            
+            const block = await web3.eth.getBlock(newBlockNumber, true)
+            setBlocks((_arr) => [block, ..._arr])
+          }
+        }
+      })
+      const latestBlockNumber = await (await web3.eth.getBlock('latest')).number
+      setBlocks(await Promise.all([...Array(10)].map((_, i) => web3.eth.getBlock(latestBlockNumber - i, true))))
+    }
+
+    func()
+  }, [])
   
   // tick
   const [tick, setTick] = useState(0)
@@ -87,7 +109,7 @@ export default function App() {
         <ambientLight />
         <pointLight distance={100} intensity={1} position={[0, -50, 10]} color="#ccc" />
         <a.group position-x={posX}>
-          { blocks.map((block, i) => {
+          { blocks.slice(0, 10).map((block, i) => {
             return (
               <Box block={block} key={i} index={i} position={[-5 * i, 0, 0]} tick={tick} onHoverOver={onHoverOverBox} onHoverOut={onHoverOutBox}/>
             )

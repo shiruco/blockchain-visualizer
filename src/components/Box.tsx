@@ -265,7 +265,7 @@ export default function Box(props: BoxProps) {
         </Html>
       </mesh>
     )
-  }, [hoverd])
+  }, [hoverd, props.block])
 
   const TxLabel = useMemo(() => {
     let txHashJsx: JSX.Element[] | null = null

@@ -11,11 +11,13 @@
     "@types/jest": "^26.0.15",
     "@types/lodash": "^4.14.170",
     "@types/node": "^12.0.0",
+    "@types/promise-queue": "^2.2.0",
     "@types/react": "^17.0.0",
     "@types/react-dom": "^17.0.0",
     "@types/styled-components": "^5.1.10",
     "@types/three": "^0.129.1",
     "lodash": "^4.17.21",
+    "promise-queue": "^2.2.5",
     "react": "^17.0.2",
     "react-dom": "^17.0.2",
     "react-scripts": "4.0.3",
@@ -26,13 +28,17 @@
     "typescript": "^4.1.2",
     "use-interval": "^1.3.0",
     "web-vitals": "^1.0.1",
-    "web3": "^1.3.6"
+    "web3": "^1.3.6",
+    "worker-loader": "^3.0.8"
+  },
+  "devDependencies": {
+    "react-app-rewired": "^2.1.8"
   },
   "scripts": {
-    "start": "react-scripts start",
-    "build": "react-scripts build",
-    "test": "react-scripts test",
-    "eject": "react-scripts eject"
+    "start": "react-app-rewired start",
+    "build": "react-app-rewired build",
+    "test": "react-app-rewired test",
+    "eject": "react-app-rewired eject"
   },
   "eslintConfig": {
     "extends": [
@@ -51,6 +57,5 @@
       "last 1 firefox version",
       "last 1 safari version"
     ]
-  },
-  "devDependencies": {}
+  }
 }
