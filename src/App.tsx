@@ -15,27 +15,17 @@ import './App.css'
 const web3 = new Web3()
 web3.setProvider(new Web3.providers.HttpProvider('https://mainnet.infura.io/v3/96915aaef4e64bca88eeac18f8945aec'))
 let blocks: BlockTransactionObject[] = []
-const latest = async () => {
+const init = async () => {
   const latestBlockNumber = await (await web3.eth.getBlock('latest')).number
-  blocks = await Promise.all([
-    web3.eth.getBlock(latestBlockNumber, true),
-    web3.eth.getBlock(latestBlockNumber - 1, true),
-    web3.eth.getBlock(latestBlockNumber - 2, true),
-    web3.eth.getBlock(latestBlockNumber - 3, true),
-    web3.eth.getBlock(latestBlockNumber - 4, true),
-    web3.eth.getBlock(latestBlockNumber - 5, true),
-    web3.eth.getBlock(latestBlockNumber - 6, true),
-    web3.eth.getBlock(latestBlockNumber - 7, true),
-    web3.eth.getBlock(latestBlockNumber - 8, true),
-    web3.eth.getBlock(latestBlockNumber - 9, true),
-  ])
-  //console.log(blocks)
-
-  // const worker = await import('./worker')
-  // worker.default()
+  blocks = await Promise.all([...Array(10)].map((_, i) => web3.eth.getBlock(latestBlockNumber - i, true)))
+  //console.log(require('./worker.js'))
+  const worker = new Worker(require('./worker.js'))
+  // worker.addEventListener('message', (message) => {
+  //   console.log(message)
+  // })
 }
 
-latest()
+init()
 
 export default function App() {
   
