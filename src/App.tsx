@@ -13,13 +13,11 @@ import useYScroll from './helpers/useYScroll'
 import WssWorker from './wss.worker'
 import './App.css'
 
+const BLOCK_NUM = 20
+
 export default function App() {
 
   const [blocks, setBlocks] = useState<BlockTransactionObject[]>([])
-
-  const addBlock = () => {
-    console.log(blocks)
-  }
 
   useEffect(() => {
     const web3 = new Web3()
@@ -34,18 +32,21 @@ export default function App() {
         const obj = JSON.parse(message.data)
         if (obj.params) {
           const newBlockNumber = parseInt(obj.params.result.number, 16)
-          addBlock()
-          // check latest block number
-          console.log("add",blocks,newBlockNumber)
-          if (true) {
-            
-            const block = await web3.eth.getBlock(newBlockNumber, true)
-            setBlocks((_arr) => [block, ..._arr])
-          }
+          const block = await web3.eth.getBlock(newBlockNumber, true)
+
+          setBlocks((arr) => {
+            console.log(arr)
+            // check latest block number
+            if (arr.length > 0 && arr[0].number !== newBlockNumber) {
+              return [block, ...arr]
+            }
+            return [...arr]
+          })
+
         }
       })
       const latestBlockNumber = await (await web3.eth.getBlock('latest')).number
-      setBlocks(await Promise.all([...Array(10)].map((_, i) => web3.eth.getBlock(latestBlockNumber - i, true))))
+      setBlocks(await Promise.all([...Array(BLOCK_NUM)].map((_, i) => web3.eth.getBlock(latestBlockNumber - i, true))))
     }
 
     func()
@@ -59,7 +60,7 @@ export default function App() {
 
   // scroll
   // 20 - 3800
-  const [dis, delta] = useYScroll([-1800, 0], { domTarget: window })
+  const [dis, delta] = useYScroll([-3800, 0], { domTarget: window })
   let posX = (dis as SpringValue<number>).to((dis: number) => (dis / 1000) * 25 * -1)
 
   const [bgStyle, setBgColor] = useSpring(() => ({
@@ -109,7 +110,7 @@ export default function App() {
         <ambientLight />
         <pointLight distance={100} intensity={1} position={[0, -50, 10]} color="#ccc" />
         <a.group position-x={posX}>
-          { blocks.slice(0, 10).map((block, i) => {
+          { blocks.slice(0, BLOCK_NUM).map((block, i) => {
             return (
               <Box block={block} key={i} index={i} position={[-5 * i, 0, 0]} tick={tick} onHoverOver={onHoverOverBox} onHoverOut={onHoverOutBox}/>
             )
