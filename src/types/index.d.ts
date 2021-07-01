@@ -1,10 +1,11 @@
 import { ReactThreeFiber } from 'react-three-fiber'
-import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls'
-
+import { GlitchPass } from 'three/examples/jsm/controls/GlitchPass'
+import { BloomPass } from 'three/examples/jsm/controls/BloomPass'
 declare global {
   namespace JSX {
     interface IntrinsicElements {
-      readonly orbitControls: ReactThreeFiber.Object3DNode<OrbitControls, typeof OrbitControls>
+      readonly glitchPass: ReactThreeFiber.Object3DNode<GlitchPass, typeof GlitchPass>
+      readonly bloomPass: ReactThreeFiber.Object3DNode<BloomPass, typeof BloomPass>
     }
   }
 }

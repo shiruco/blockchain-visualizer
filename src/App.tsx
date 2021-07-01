@@ -1,12 +1,13 @@
-import React, { Suspense, useEffect, useState, useCallback } from 'react'
-import { Canvas, useThree } from '@react-three/fiber'
+import React, { Suspense, useEffect, useState, useMemo, useCallback } from 'react'
+import { Canvas, extend, useThree } from '@react-three/fiber'
 import { a } from '@react-spring/three'
 import { SpringValue, useSpring, animated, config } from 'react-spring'
-import { Stats } from '@react-three/drei'
+import { Stats, Effects } from '@react-three/drei'
 import useInterval from 'use-interval'
 import Web3 from "web3"
 import { BlockTransactionObject } from "web3-eth"
 import PromiseQueue from 'promise-queue'
+import { GlitchPass } from 'three/examples/jsm/postprocessing/GlitchPass'
 import Box from './components/Box'
 import Swarm from './components/Swarm'
 import useYScroll from './helpers/useYScroll'
@@ -15,9 +16,14 @@ import './App.css'
 
 const BLOCK_NUM = 20
 
+extend({ GlitchPass })
+
 export default function App() {
 
   const [blocks, setBlocks] = useState<BlockTransactionObject[]>([])
+
+  // glitch
+  const [glitchEnabled, setGlitchEnabled] = useState(false)
 
   useEffect(() => {
     const web3 = new Web3()
@@ -35,8 +41,9 @@ export default function App() {
           const block = await web3.eth.getBlock(newBlockNumber, true)
 
           setBlocks((arr) => {
-            console.log(arr)
             // check latest block number
+            setGlitchEnabled(true)
+            console.log(arr)
             if (arr.length > 0 && arr[0].number !== newBlockNumber) {
               return [block, ...arr]
             }
@@ -51,6 +58,10 @@ export default function App() {
 
     func()
   }, [])
+
+  setTimeout(() => {
+    setGlitchEnabled(false)
+  }, 5000)
   
   // tick
   const [tick, setTick] = useState(0)
@@ -106,17 +117,22 @@ export default function App() {
   return (
     <animated.div style={bgStyle}>
       <Canvas camera={{position: [0,0,5], fov: 60}} >
+        <Effects>
+          <glitchPass enabled={glitchEnabled} attachArray="passes" />
+        </Effects>
         <CameraPosition />
         <ambientLight />
         <pointLight distance={100} intensity={1} position={[0, -50, 10]} color="#ccc" />
-        <a.group position-x={posX}>
-          { blocks.slice(0, BLOCK_NUM).map((block, i) => {
-            return (
-              <Box block={block} key={i} index={i} position={[-5 * i, 0, 0]} tick={tick} onHoverOver={onHoverOverBox} onHoverOut={onHoverOutBox}/>
-            )
-          }) }
-        </a.group>
-        <Swarm count={1500} />
+        <Suspense fallback={null}>
+          <a.group position-x={posX}>
+            { blocks.sort((a,b) => b.number - a.number).slice(0, BLOCK_NUM).map((block, i) => {
+              return (
+                <Box block={block} key={i} index={i} position={[-5 * i, 0, 0]} tick={tick} onHoverOver={onHoverOverBox} onHoverOut={onHoverOutBox}/>
+              )
+            }) }
+          </a.group>
+        </Suspense>
+        <Swarm count={1000} />
         <Stats />
       </Canvas>
     </animated.div>

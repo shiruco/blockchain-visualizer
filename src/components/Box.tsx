@@ -229,6 +229,10 @@ export default function Box(props: BoxProps) {
     const x = posX - 0.8
     const y = position[1] + 1.6
 
+    if (!props.block) {
+      return null
+    }
+
     let blockHashJsx: JSX.Element[] | null = null
     const blockHashes = hash2Colors(props.block.hash)
     if (blockHashes && blockHashes.length) {
