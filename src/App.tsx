@@ -1,7 +1,7 @@
 import React, { Suspense, useEffect, useState, useMemo, useCallback } from 'react'
 import { Canvas, extend, useThree } from '@react-three/fiber'
 import { a } from '@react-spring/three'
-import { SpringValue, useSpring, animated, config } from 'react-spring'
+import { SpringValue, useSpring, animated, config, Interpolation } from 'react-spring'
 import { Stats, Effects } from '@react-three/drei'
 import useInterval from 'use-interval'
 import Web3 from "web3"
@@ -30,7 +30,7 @@ export default function App() {
     web3.setProvider(new Web3.providers.HttpProvider('https://mainnet.infura.io/v3/96915aaef4e64bca88eeac18f8945aec'))
 
     // block hash's queue
-    //const queue = new PromiseQueue(1, Infinity)
+    const queue = new PromiseQueue(1, Infinity)
 
     const func = async () => {
       const worker = new WssWorker()
@@ -39,11 +39,12 @@ export default function App() {
         if (obj.params) {
           const newBlockNumber = parseInt(obj.params.result.number, 16)
           const block = await web3.eth.getBlock(newBlockNumber, true)
+          if (!block) return
 
           setBlocks((arr) => {
             // check latest block number
             setGlitchEnabled(true)
-            console.log(arr)
+            //console.log(arr)
             if (arr.length > 0 && arr[0].number !== newBlockNumber) {
               return [block, ...arr]
             }
@@ -72,7 +73,9 @@ export default function App() {
   // scroll
   // 20 - 3800
   const [dis, delta] = useYScroll([-3800, 0], { domTarget: window })
+  
   let posX = (dis as SpringValue<number>).to((dis: number) => (dis / 1000) * 25 * -1)
+
 
   const [bgStyle, setBgColor] = useSpring(() => ({
     width: "100vw",
@@ -125,7 +128,7 @@ export default function App() {
         <pointLight distance={100} intensity={1} position={[0, -50, 10]} color="#ccc" />
         <Suspense fallback={null}>
           <a.group position-x={posX}>
-            { blocks.sort((a,b) => b.number - a.number).slice(0, BLOCK_NUM).map((block, i) => {
+            { blocks.slice(0, BLOCK_NUM).map((block, i) => {
               return (
                 <Box block={block} key={i} index={i} position={[-5 * i, 0, 0]} tick={tick} onHoverOver={onHoverOverBox} onHoverOut={onHoverOutBox}/>
               )
