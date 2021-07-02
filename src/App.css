@@ -8,6 +8,18 @@
   color: #fff;
 }
 
+.loading {
+  font-family: 'Staatliches', cursive;
+  font-size: 18px;
+  color: #fff;
+  animation: blinkAnime 0.03s infinite alternate;
+}
+
+@keyframes blinkAnime{
+  0% { opacity: 0 }
+  100% { opacity: 1 }
+}
+
 .title .version {
   font-size: 13px;
   padding-left: 10px;

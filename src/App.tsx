@@ -1,6 +1,7 @@
-import React, { Suspense, useEffect, useState, useCallback } from 'react'
+import React, { useMemo, useEffect, useState, useCallback } from 'react'
 import { Canvas, extend, useThree } from '@react-three/fiber'
 import { a } from '@react-spring/three'
+import { Html } from "@react-three/drei"
 import { SpringValue, useSpring, animated, config } from 'react-spring'
 import { Effects } from '@react-three/drei'
 import useInterval from 'use-interval'
@@ -72,7 +73,7 @@ export default function App() {
   
   let posX = (dis as SpringValue<number>).to((dis: number) => (dis / 1000) * 25 * -1)
 
-  const [bgStyle, setBgColor] = useSpring(() => ({
+  const [bgStyle, bgStyleRef] = useSpring(() => ({
     width: "100vw",
     height: "100vh",
     background: "radial-gradient(ellipse at 50% -100%, #222222 0%, #a4a2a2 99%)",
@@ -91,26 +92,51 @@ export default function App() {
   }
 
   const onHoverOverBox = useCallback(() => {
-    setBgColor({
+    bgStyleRef({
       background: "radial-gradient(ellipse at 50% -100%, #222222 0%, #2c2c2c 99%)",
       config: config.slow
     })
   }, [])
 
   const onHoverOutBox = useCallback(() => {
-    setBgColor({
+    bgStyleRef({
       background: "radial-gradient(ellipse at 50% -100%, #222222 0%, #a4a2a2 99%)",
       config: config.slow
     })
   }, [])
 
-  if (blocks.length <= 0) {
-    return (
-      <>
-        loading...
-      </>
-    )
-  }
+  // const [{y}, posYRef] = useSpring(() => ({
+  //   y: -5
+  // }))
+  // y.to(() => -0.2)
+
+  // const { y } = useSpring({
+  //   from: { y: -3 },
+  //   to: { y: -0.2 },
+  //   config: { frequency: 1 },
+  // })
+
+  const Contents = useMemo(() => {
+    if (blocks.length <= 0) {
+      return (
+        <Html>
+          <div className="loading">
+            LOADING...
+          </div>
+        </Html>
+      )
+    } else {
+      return (
+        <a.group position-x={posX}>
+          { blocks.slice(0, BLOCK_NUM).map((block, i) => {
+            return (
+              <Box block={block} key={i} index={i} position={[-5 * i, 0, 0]} tick={tick} onHoverOver={onHoverOverBox} onHoverOut={onHoverOutBox}/>
+            )
+          }) }
+        </a.group>
+      )
+    }
+  }, [tick, blocks])
 
   return (
     <animated.div style={bgStyle}>
@@ -121,15 +147,7 @@ export default function App() {
         <CameraPosition />
         <ambientLight />
         <pointLight distance={240} intensity={1} position={[0, -30, 10]} color="#ccc" />
-        <Suspense fallback={null}>
-          <a.group position-x={posX} position-y={-0.2}>
-            { blocks.slice(0, BLOCK_NUM).map((block, i) => {
-              return (
-                <Box block={block} key={i} index={i} position={[-5 * i, 0, 0]} tick={tick} onHoverOver={onHoverOverBox} onHoverOut={onHoverOutBox}/>
-              )
-            }) }
-          </a.group>
-        </Suspense>
+        {Contents}
         <Swarm count={1000} />
         {/* <Stats /> */}
       </Canvas>
