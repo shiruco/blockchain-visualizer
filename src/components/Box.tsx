@@ -3,9 +3,9 @@ import { ReactThreeFiber, useThree, useFrame } from '@react-three/fiber'
 import { Html } from "@react-three/drei"
 import { BlockTransactionObject } from "web3-eth"
 import * as THREE from 'three'
-import { Group, InstancedMesh, Mesh, Vector3, BufferGeometry } from 'three'
-import { a } from '@react-spring/three'
-import { useSpring, config } from '@react-spring/core'
+import { Group, Mesh, Vector3, BufferGeometry } from 'three'
+import { a, useSpring } from '@react-spring/three'
+import { config } from '@react-spring/core'
 import { hash2Colors } from '../utils/hash2Colors'
 
 type BoxProps = ReactThreeFiber.Object3DNode<Mesh, typeof Mesh> & {
@@ -27,8 +27,6 @@ let mousePosition = { x: 0, y: 0 }
 let intersectedTx: any
 
 export default function Box(props: BoxProps) {
-  //console.log(props.block.miner)
-  
   const {camera} = useThree()
 
   const [hoverd, setHoverd] = useState(false)
@@ -38,22 +36,35 @@ export default function Box(props: BoxProps) {
     position: new THREE.Vector3()
   })
 
-  const [{ rotation }, setRotation] = useSpring(() => ({
+  const [{ rotation }, rotationRef] = useSpring(() => ({
     rotation: 0
   }))
 
   useEffect(() => {
     if (hoverd) return
     const r = rotation.get() + Math.PI
-    setRotation({
+    rotationRef({
       rotation: Math.trunc(r),
       config: { mass: 5, tension: 400, friction: 50, precision: 0.0001 }
     })
-  },[hoverd, setRotation, rotation, props.tick])
+  },[hoverd, rotationRef, rotation, props.tick])
 
-  const [{ scale }, setScale] = useSpring(() => ({
+  const [{ scale }, scaleRef] = useSpring(() => ({
     scale: 1.5
   }))
+
+  useEffect(() => {
+    //scaleRef({scale: 1.5})
+    return () => {
+      if (props.index === 0) {
+        scaleRef({
+          from: {scale: 0.1},
+          to: {scale: 1.5},
+          config: config.wobbly
+        })
+      }
+    }
+  },[props.block])
 
   const handleMouseMove = useCallback((e: MouseEvent) => {
     const x = ( e.clientX / window.innerWidth ) * 2 - 1
@@ -63,11 +74,10 @@ export default function Box(props: BoxProps) {
 
   const handleOnPointerOver = useCallback((e: PointerEvent) => {
     e.stopPropagation()
-    //e.preventDefault()
 
     setHoverd(true)
     setPointRendering(true)
-    setScale({
+    scaleRef({
       scale: 2,
       config: config.wobbly
     })
@@ -76,14 +86,14 @@ export default function Box(props: BoxProps) {
 
     window.addEventListener("mousemove", handleMouseMove)
 
-  }, [setScale])
+  }, [scaleRef])
 
   const handleOnPointerOut = useCallback((e: PointerEvent) => {
     e.stopPropagation()
 
     setHoverd(false)
     setPointRendering(false)
-    setScale({
+    scaleRef({
       scale: 1.5,
       config: config.wobbly
     })
@@ -91,7 +101,7 @@ export default function Box(props: BoxProps) {
     props.onHoverOut()
 
     window.removeEventListener("mousemove", handleMouseMove)
-  }, [setScale])
+  }, [scaleRef])
 
   const geom = useMemo(() => {
     const geom = new THREE.BoxBufferGeometry(1,1,1)
@@ -181,7 +191,6 @@ export default function Box(props: BoxProps) {
   })
 
   const LineSecmentContents = useMemo(() => {
-    //console.log("render LineSecmentContents", geom)
     return (
       <a.lineSegments position={props.position} visible={hoverd} scale={scale} rotation-x={rotation}>
         <edgesGeometry attach='geometry' args={[geom]} />
@@ -191,7 +200,6 @@ export default function Box(props: BoxProps) {
   }, [hoverd, scale])
 
   const Contents = useMemo(() => {
-    //console.log("render Contents")
     return (
       <a.mesh {...props} visible={!hoverd} scale={scale} rotation-x={rotation} onPointerOver={handleOnPointerOver} onPointerOut={handleOnPointerOut}>
         <boxBufferGeometry attach='geometry' />

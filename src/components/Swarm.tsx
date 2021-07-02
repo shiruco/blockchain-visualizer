@@ -1,12 +1,10 @@
-import React, { useRef, useMemo } from 'react'
+import { useRef, useMemo } from 'react'
 import { Object3D, InstancedMesh, PlaneGeometry, MeshBasicMaterial } from 'three'
-import { useThree, useFrame } from '@react-three/fiber'
+import { useFrame } from '@react-three/fiber'
 
 export default function Swarm({ count }: { count: number }) {
     const mesh = useRef({} as InstancedMesh)
     const light = useRef({} as any)
-    const { size, viewport } = useThree()
-    const aspect = size.width / viewport.width
   
     const dummy = useMemo(() => new Object3D(), [])
     const particles = useMemo(() => {

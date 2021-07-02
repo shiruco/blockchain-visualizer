@@ -1,12 +1,11 @@
-import React, { Suspense, useEffect, useState, useMemo, useCallback } from 'react'
+import React, { Suspense, useEffect, useState, useCallback } from 'react'
 import { Canvas, extend, useThree } from '@react-three/fiber'
 import { a } from '@react-spring/three'
-import { SpringValue, useSpring, animated, config, Interpolation } from 'react-spring'
-import { Stats, Effects } from '@react-three/drei'
+import { SpringValue, useSpring, animated, config } from 'react-spring'
+import { Effects } from '@react-three/drei'
 import useInterval from 'use-interval'
 import Web3 from "web3"
 import { BlockTransactionObject } from "web3-eth"
-import PromiseQueue from 'promise-queue'
 import { GlitchPass } from 'three/examples/jsm/postprocessing/GlitchPass'
 import Box from './components/Box'
 import Swarm from './components/Swarm'
@@ -28,9 +27,6 @@ export default function App() {
   useEffect(() => {
     const web3 = new Web3()
     web3.setProvider(new Web3.providers.HttpProvider('https://mainnet.infura.io/v3/96915aaef4e64bca88eeac18f8945aec'))
-
-    // block hash's queue
-    const queue = new PromiseQueue(1, Infinity)
 
     const func = async () => {
       const worker = new WssWorker()
@@ -60,6 +56,7 @@ export default function App() {
     func()
   }, [])
 
+  // disable glitch effect component
   setTimeout(() => {
     setGlitchEnabled(false)
   }, 5000)
@@ -71,11 +68,9 @@ export default function App() {
   }, 1000)
 
   // scroll
-  // 20 - 3800
   const [dis, delta] = useYScroll([-3800, 0], { domTarget: window })
   
   let posX = (dis as SpringValue<number>).to((dis: number) => (dis / 1000) * 25 * -1)
-
 
   const [bgStyle, setBgColor] = useSpring(() => ({
     width: "100vw",
@@ -125,9 +120,9 @@ export default function App() {
         </Effects>
         <CameraPosition />
         <ambientLight />
-        <pointLight distance={100} intensity={1} position={[0, -50, 10]} color="#ccc" />
+        <pointLight distance={240} intensity={1} position={[0, -30, 10]} color="#ccc" />
         <Suspense fallback={null}>
-          <a.group position-x={posX}>
+          <a.group position-x={posX} position-y={-0.2}>
             { blocks.slice(0, BLOCK_NUM).map((block, i) => {
               return (
                 <Box block={block} key={i} index={i} position={[-5 * i, 0, 0]} tick={tick} onHoverOver={onHoverOverBox} onHoverOut={onHoverOutBox}/>
@@ -136,8 +131,16 @@ export default function App() {
           </a.group>
         </Suspense>
         <Swarm count={1000} />
-        <Stats />
+        {/* <Stats /> */}
       </Canvas>
+      <div className="title">
+        <span>Ethereum blockchain visualization</span>
+        <span className="version">(beta)</span>
+        <div className="desc">
+          You are viewing the latest 20 blocks.<br />
+          Each transaction is stored in a block.
+        </div>
+      </div>
     </animated.div>
   )
 }

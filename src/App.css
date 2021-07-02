@@ -1,3 +1,23 @@
+.title {
+  font-family: 'Staatliches', cursive;
+  position: absolute;
+  top: 0;
+  left: 0;
+  font-size: 22px;
+  padding: 7px;
+  color: #fff;
+}
+
+.title .version {
+  font-size: 13px;
+  padding-left: 10px;
+}
+
+.title .desc {
+  font-size: 12px;
+  padding: 10px 0 0 0;
+}
+
 .block-content {
   text-align: left;
   color: #000;
