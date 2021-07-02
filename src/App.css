@@ -12,6 +12,7 @@
   font-family: 'Staatliches', cursive;
   font-size: 18px;
   color: #fff;
+  margin: 0 auto;
   animation: blinkAnime 0.03s infinite alternate;
 }
 
@@ -22,7 +23,7 @@
 
 .title .version {
   font-size: 13px;
-  padding-left: 10px;
+  padding-left: 5px;
 }
 
 .title .desc {

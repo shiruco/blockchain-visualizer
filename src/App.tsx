@@ -105,11 +105,6 @@ export default function App() {
     })
   }, [])
 
-  // const [{y}, posYRef] = useSpring(() => ({
-  //   y: -5
-  // }))
-  // y.to(() => -0.2)
-
   // const { y } = useSpring({
   //   from: { y: -3 },
   //   to: { y: -0.2 },
@@ -119,7 +114,7 @@ export default function App() {
   const Contents = useMemo(() => {
     if (blocks.length <= 0) {
       return (
-        <Html>
+        <Html center>
           <div className="loading">
             LOADING...
           </div>
@@ -127,7 +122,7 @@ export default function App() {
       )
     } else {
       return (
-        <a.group position-x={posX}>
+        <a.group position-x={posX} position-y={-0.3}>
           { blocks.slice(0, BLOCK_NUM).map((block, i) => {
             return (
               <Box block={block} key={i} index={i} position={[-5 * i, 0, 0]} tick={tick} onHoverOver={onHoverOverBox} onHoverOut={onHoverOutBox}/>
