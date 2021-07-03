@@ -2,7 +2,7 @@ import React, { useMemo, useEffect, useState, useCallback } from 'react'
 import { Canvas, extend, useThree } from '@react-three/fiber'
 import { a } from '@react-spring/three'
 import { Html } from "@react-three/drei"
-import { SpringValue, useSpring, animated, config } from 'react-spring'
+import { SpringValue, SpringRef, useSpring, animated, config } from 'react-spring'
 import { Effects } from '@react-three/drei'
 import useInterval from 'use-interval'
 import Web3 from "web3"
@@ -28,9 +28,9 @@ export default function App() {
   useEffect(() => {
     const web3 = new Web3()
     web3.setProvider(new Web3.providers.HttpProvider('https://mainnet.infura.io/v3/96915aaef4e64bca88eeac18f8945aec'))
-
+    const worker = new WssWorker()
+    
     const func = async () => {
-      const worker = new WssWorker()
       worker.addEventListener('message', async (message) => {
         const obj = JSON.parse(message.data)
         if (obj.params) {
@@ -69,7 +69,7 @@ export default function App() {
   }, 1000)
 
   // scroll
-  const [dis, delta] = useYScroll([-3800, 0], { domTarget: window })
+  const [dis, disRef, delta] = useYScroll([-3800, 0], { domTarget: window })
   
   let posX = (dis as SpringValue<number>).to((dis: number) => (dis / 1000) * 25 * -1)
 
@@ -105,11 +105,12 @@ export default function App() {
     })
   }, [])
 
-  // const { y } = useSpring({
-  //   from: { y: -3 },
-  //   to: { y: -0.2 },
-  //   config: { frequency: 1 },
-  // })
+  const handleOnRangeChange = useCallback((e) => {
+    const p = e.target.value as number
+    const _y: number = Math.floor(-3800 * (100 - p) / 100);
+    
+    (disRef as SpringRef<{ y: number }>)({ y: _y })
+  }, [])
 
   const Contents = useMemo(() => {
     if (blocks.length <= 0) {
@@ -122,7 +123,7 @@ export default function App() {
       )
     } else {
       return (
-        <a.group position-x={posX} position-y={-0.3}>
+        <a.group position-x={posX} position-y={0}>
           { blocks.slice(0, BLOCK_NUM).map((block, i) => {
             return (
               <Box block={block} key={i} index={i} position={[-5 * i, 0, 0]} tick={tick} onHoverOver={onHoverOverBox} onHoverOut={onHoverOutBox}/>
@@ -154,6 +155,13 @@ export default function App() {
           Each transaction is stored in a block.
         </div>
       </div>
+      {
+        navigator.userAgent.match(/(iPhone|iPad|iPod|Android)/i) &&
+          <div className="range">
+            <input type="range" min="0" max="100" step="1" defaultValue="100" onChange={handleOnRangeChange} />
+          </div>
+      }
+      
     </animated.div>
   )
 }

@@ -4,7 +4,6 @@ export default class WssWorker extends Worker {
     super("")
   }
 }
-
 const ws = new WebSocket("wss://mainnet.infura.io/ws/v3/96915aaef4e64bca88eeac18f8945aec")
 
 ws.addEventListener("open", e => {

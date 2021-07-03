@@ -1,3 +1,4 @@
+
 .title {
   font-family: 'Staatliches', cursive;
   position: absolute;
@@ -77,4 +78,33 @@
   width: 10px;
   height: 10px;
   display: block;
+}
+
+.range {
+  position: absolute;
+  left: 50%;
+  bottom: 10%;
+  transform: translate(-50%, -50%);
+}
+input[type=range] {
+  -webkit-appearance: none;
+  margin: 18px 0;
+  width: 50vw;
+}
+input[type=range]:focus {
+  outline: none;
+}
+input[type=range]::-webkit-slider-runnable-track {
+  width: 100%;
+  height: 1px;
+  cursor: pointer;
+  border: 0.1px solid #fff;
+}
+input[type=range]::-webkit-slider-thumb {
+  height: 36px;
+  width: 16px;
+  background: #ffffff;
+  cursor: pointer;
+  -webkit-appearance: none;
+  margin-top: -18px;
 }
