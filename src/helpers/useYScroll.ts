@@ -16,5 +16,5 @@ export default function useYScroll(bounds: [number, number], props: any) {
     [bounds, y, api]
   )
   const bind = useGesture({ onWheel: fn }, {...props, useTouch: true})
-  return [y, delta, bind]
+  return [y, api, delta,bind]
 }
