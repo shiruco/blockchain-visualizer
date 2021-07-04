@@ -4,7 +4,7 @@ export default class WssWorker extends Worker {
     super("")
   }
 }
-const wssProvider = process.env.REACT_APP_WSS_PROVIDER as string
+const wssProvider = process.env.REACT_APP_WSS_PROVIDER
 const ws = new WebSocket(wssProvider)
 
 ws.addEventListener("open", e => {

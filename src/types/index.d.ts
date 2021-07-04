@@ -8,4 +8,11 @@ declare global {
       readonly bloomPass: ReactThreeFiber.Object3DNode<BloomPass, typeof BloomPass>
     }
   }
+
+  namespace NodeJS {
+    interface ProcessEnv {
+      readonly REACT_APP_HTTP_PROVIDER: string
+      readonly REACT_APP_WSS_PROVIDER: string
+    }
+  }
 }
