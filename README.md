@@ -14,11 +14,12 @@ npm start
 
 #### subscribe ethereum real-time events
 
-this project uses Infura Ethereum API.  
-you need to get ProjectID and set `.env` file as below.
+you need to set HTTP and WSS provider url to `.env` file as below.
 
+example  
 ```
-REACT_APP_INFURA_PROJECT_ID="YOUR_INFURA_PROJECT_ID"
+REACT_APP_HTTP_PROVIDER="https://mainnet.infura.io/v3/PROJECT_ID"
+REACT_APP_WSS_PROVIDER="wss://mainnet.infura.io/ws/v3/PROJECT_ID"
 ```
 
 ## Build
