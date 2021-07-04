@@ -10,7 +10,7 @@ import { BlockTransactionObject } from "web3-eth"
 import { GlitchPass } from 'three/examples/jsm/postprocessing/GlitchPass'
 import Box from './components/Box'
 import Swarm from './components/Swarm'
-import useYScroll from './helpers/useYScroll'
+import useYScroll from './hooks/useYScroll'
 import WssWorker from './wss.worker'
 import './App.css'
 
@@ -151,7 +151,7 @@ export default function App() {
         <span>Ethereum blockchain visualization</span>
         <span className="version">(beta)</span>
         <div className="desc">
-          You are viewing the latest 20 blocks.<br />
+          You are viewing the latest {BLOCK_NUM} blocks.<br />
           Each transaction is stored in a block.
         </div>
       </div>
