@@ -18,6 +18,11 @@ const BLOCK_NUM = 20
 
 extend({ GlitchPass })
 
+const web3 = new Web3()
+web3.setProvider(new Web3.providers.HttpProvider(`https://mainnet.infura.io/v3/${process.env.REACT_APP_INFURA_PROJECT_ID}`))
+
+const worker = new WssWorker()
+
 export default function App() {
 
   const [blocks, setBlocks] = useState<BlockTransactionObject[]>([])
@@ -26,10 +31,6 @@ export default function App() {
   const [glitchEnabled, setGlitchEnabled] = useState(false)
 
   useEffect(() => {
-    const web3 = new Web3()
-    web3.setProvider(new Web3.providers.HttpProvider('https://mainnet.infura.io/v3/96915aaef4e64bca88eeac18f8945aec'))
-    const worker = new WssWorker()
-    
     const func = async () => {
       worker.addEventListener('message', async (message) => {
         const obj = JSON.parse(message.data)
