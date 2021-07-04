@@ -19,7 +19,7 @@ const BLOCK_NUM = 20
 extend({ GlitchPass })
 
 const web3 = new Web3()
-const httpProvider = process.env.REACT_APP_HTTP_PROVIDER as string
+const httpProvider = process.env.REACT_APP_HTTP_PROVIDER
 web3.setProvider(new Web3.providers.HttpProvider(httpProvider))
 
 const worker = new WssWorker()
