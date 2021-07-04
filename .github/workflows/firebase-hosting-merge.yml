@@ -12,9 +12,6 @@ jobs:
     env:
       REACT_APP_HTTP_PROVIDER: '${{ secrets.REACT_APP_HTTP_PROVIDER }}'
       REACT_APP_WSS_PROVIDER: '${{ secrets.REACT_APP_WSS_PROVIDER }}'
-    run: |
-      echo ${REACT_APP_HTTP_PROVIDER}
-      echo ${REACT_APP_WSS_PROVIDER}
     steps:
       - uses: actions/checkout@v2
       - run: npm ci && npm run build
