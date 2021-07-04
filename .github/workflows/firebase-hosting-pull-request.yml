@@ -10,6 +10,7 @@ jobs:
       matrix:
         node-version: [12.x]
     env:
+      CI: false
       REACT_APP_HTTP_PROVIDER: '${{ secrets.REACT_APP_HTTP_PROVIDER }}'
       REACT_APP_WSS_PROVIDER: '${{ secrets.REACT_APP_WSS_PROVIDER }}'
     steps:
