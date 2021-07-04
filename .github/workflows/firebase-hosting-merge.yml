@@ -9,6 +9,9 @@ name: Deploy to Firebase Hosting on merge
 jobs:
   build_and_deploy:
     runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        node-version: [12.x]
     env:
       REACT_APP_HTTP_PROVIDER: '${{ secrets.REACT_APP_HTTP_PROVIDER }}'
       REACT_APP_WSS_PROVIDER: '${{ secrets.REACT_APP_WSS_PROVIDER }}'
