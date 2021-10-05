@@ -29,3 +29,4 @@ REACT_APP_WSS_PROVIDER="wss://mainnet.infura.io/ws/v3/PROJECT_ID"
 npm run build
 ```
 
+
